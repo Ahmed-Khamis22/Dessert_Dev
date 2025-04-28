@@ -9,12 +9,13 @@ type ProductProps = {
   price: string;
   tag?: string;
   rating: number;
+  calories: number;
   images: string[]; // بدل image واحد، images array
 };
 
 const defaultImage = 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Image_not_available.png/800px-Image_not_available.png';
 
-export default function ProductCard({ id, name, description, price, tag, rating, images }: ProductProps) {
+export default function ProductCard({ id, name, description, price, tag, rating, calories, images }: ProductProps) {
   const displayDescription = description.length > 70 ? `${description.slice(0, 70)}...` : description;
 
   const priceNumber = parseFloat(price.replace('$', ''));
@@ -27,15 +28,19 @@ export default function ProductCard({ id, name, description, price, tag, rating,
       href={{
         pathname: '/(tabs)/productDetails',
         params: {
+          id, // ✨ لازم تبعته!
           name,
           description,
           price,
           tag,
-          images: JSON.stringify(images), // نودي كل الصور
+          rating,
+          calories,
+          images: JSON.stringify(images),
         },
       }}
       asChild
     >
+
       <TouchableOpacity style={styles.productContainer}>
         {tag && (
           <View style={styles.tagContainer}>

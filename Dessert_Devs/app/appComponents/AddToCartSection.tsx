@@ -4,15 +4,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 
 type Props = {
+  id: string;
   name: string;
   description: string;
   price: string;
+  images: string[];
   tag?: string;
+  rating: number;
+  calories: number;
   onAddToCart: () => void;
-  resetSignal?: string; 
+  resetSignal?: string;
 };
 
-export default function AddToCartSection({ name, description, price, tag, onAddToCart }: Props) {
+export default function AddToCartSection({ name, description, price, tag, rating, calories, onAddToCart }: Props) {
   const [quantity, setQuantity] = useState(1);
   const [selectedOption, setSelectedOption] = useState<'Egg' | 'Eggless'>('Egg');
   const [selectedSize, setSelectedSize] = useState('6" Cake | Serves 6-8');
@@ -70,12 +74,13 @@ export default function AddToCartSection({ name, description, price, tag, onAddT
       <View style={styles.metaRow}>
         <View style={styles.metaItem}>
           <Ionicons name="star" size={14} color="#fb6090" />
-          <Text style={styles.metaValue}>4.8</Text>
-          <Text style={styles.metaSubText}>(77 Reviews)</Text>
+          <Text style={styles.metaValue}>{rating}</Text> 
+          {/* ✨ هنا عرضت الريتنج الحقيقي */}
         </View>
         <View style={styles.metaItem}>
           <Ionicons name="flame" size={14} color="#fb6090" />
-          <Text style={styles.metaValue}>95</Text>
+          <Text style={styles.metaValue}>{calories}</Text> 
+          {/* ✨ هنا عرضت الكالوريز الحقيقية */}
           <Text style={styles.metaSubText}>Calories</Text>
         </View>
       </View>

@@ -12,11 +12,16 @@ type Props = {
 export default function ProductDetailsHeader({ images }: Props) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFavorite, setIsFavorite] = useState(false); // ⭐ أضفنا ستايت للفيفوريت
   const flatListRef = useRef<FlatList<string>>(null);
 
   const handleScroll = (event: any) => {
     const index = Math.round(event.nativeEvent.contentOffset.x / width);
     setCurrentIndex(index);
+  };
+
+  const toggleFavorite = () => {
+    setIsFavorite(prev => !prev);
   };
 
   return (
@@ -26,32 +31,40 @@ export default function ProductDetailsHeader({ images }: Props) {
 
       {/* Top Buttons */}
       <View style={styles.topButtons}>
-        <Pressable style={styles.iconWrapper} onPress={() => router.back()}>
+        {/* زر الرجوع */}
+        <Pressable style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color="#fff" />
         </Pressable>
-        <Pressable style={styles.iconWrapper}>
-          <Ionicons name="heart-outline" size={20} color="#fff" />
+
+        {/* زر الفيفوريت */}
+        <Pressable style={styles.favoriteButton} onPress={toggleFavorite}>
+          <Ionicons
+            name={isFavorite ? "heart" : "heart-outline"}
+            size={27}
+            color={isFavorite ? "#fb6090" : "#fb6090"}
+          />
         </Pressable>
       </View>
 
+
       {/* Product Image and Dots */}
       <View style={styles.imageArea}>
-      <View style={[{ height: 260 }]}>
-        <FlatList
-          data={images}
-          renderItem={({ item }) => (
-            <View style={{ width: Dimensions.get('window').width, alignItems: 'center' }}>
-              <Image source={{ uri: item }} style={styles.productImage} />
-            </View>
-          )}
-          keyExtractor={(_, index) => index.toString()}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          scrollEnabled={true}
-          onMomentumScrollEnd={handleScroll}
-        />
-      </View>
+        <View style={[{ height: 260 }]}>
+          <FlatList
+            data={images}
+            renderItem={({ item }) => (
+              <View style={{ width: width, alignItems: 'center' }}>
+                <Image source={{ uri: item }} style={styles.productImage} />
+              </View>
+            )}
+            keyExtractor={(_, index) => index.toString()}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            scrollEnabled={true}
+            onMomentumScrollEnd={handleScroll}
+          />
+        </View>
 
         <View style={styles.dotsRow}>
           {images.map((_, index) => (
@@ -98,6 +111,26 @@ const styles = StyleSheet.create({
     marginTop: 60,
     zIndex: 2,
   },
+  backButton: {
+    backgroundColor: '#fb6090',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 2, 
+  },
+  
+  favoriteButton: {
+    backgroundColor: '#fff',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 4, 
+  },  
+  
   iconWrapper: {
     backgroundColor: 'rgba(255,255,255,0.2)',
     padding: 10,

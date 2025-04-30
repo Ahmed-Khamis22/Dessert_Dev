@@ -1,5 +1,4 @@
 // app/(auth)/register.tsx
-
 import React, { useState } from 'react';
 import {
   TextInput,
@@ -7,24 +6,17 @@ import {
   View,
   Alert,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
-  Platform,
-  ImageBackground,
+  Image,
 } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-const backgroundImg = {
-  uri: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=1600&q=80',
-};
-
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [passwordVisible, setPasswordVisible] = useState(false);
   const router = useRouter();
 
   const handleRegister = async () => {
@@ -49,133 +41,166 @@ export default function Register() {
   };
 
   return (
-    <ImageBackground source={backgroundImg} style={styles.background} resizeMode="cover">
-      <View style={styles.overlay}>
-        <Text style={styles.textTitle}>Create Account 🍰</Text>
-        <View style={styles.formContainer}>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Email"
-            placeholderTextColor="#aaa"
-            keyboardType="email-address"
-            autoCapitalize="none"
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.brandName}>Dessert Devs</Text>
+        <TouchableOpacity style={styles.menuButton}>
+          <Ionicons name="menu" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.formContainer}>
+        <Text style={styles.label}>EMAIL:</Text>
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Your email address..."
+          placeholderTextColor="#aaa"
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+
+        <Text style={styles.label}>PASSWORD:</Text>
+        <TextInput
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Enter valid password..."
+          secureTextEntry
+          placeholderTextColor="#aaa"
+          autoCapitalize="none"
+        />
+
+        <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+          <Text style={styles.buttonText}>REGISTER</Text>
+        </TouchableOpacity>
+
+        <View style={styles.orSignInSection}>
+          <Text style={styles.orSigninText}>OR SIGN IN WITH</Text>
+        </View>
+
+        <TouchableOpacity style={styles.googleButton} onPress={() => console.log('Google Sign-In')}>
+          <Image 
+            source={require('../../assets/images/google-logo.png')}
+            style={styles.googleLogo}
           />
-          <View style={styles.passwordWrapper}>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Password"
-              secureTextEntry={!passwordVisible}
-              placeholderTextColor="#aaa"
-              autoCapitalize="none"
-            />
-            <TouchableOpacity
-              // style={styles.eyeIcon}
-              onPress={() => setPasswordVisible(!passwordVisible)}
-            >
-              {/* <Ionicons
-                name={passwordVisible ? 'eye' : 'eye-off'}
-                size={24}
-                color="#d81b60"
-              /> */}
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity style={styles.button} onPress={handleRegister}>
-            <Text style={styles.buttonText}>Register</Text>
+          <Text style={styles.googleButtonText}>Continue with Google</Text>
+        </TouchableOpacity>
+
+        <View style={styles.alreadyAccountContainer}>
+          <Text style={styles.alreadyAccountText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+            <Text style={styles.signinLink}>Sign in</Text>
           </TouchableOpacity>
-          <View style={styles.loginContainer}>
-            <Text style={styles.loginText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => router.push('/login')}>
-              <Text style={styles.loginLink}>Login here</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  background: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#f5f5f5',
     padding: 24,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  brandName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'rgb(220,96,129)',
+  },
+  menuButton: {
+    backgroundColor: '#',
+    padding: 10,
+    borderRadius: 8,
   },
   formContainer: {
     width: '100%',
-    maxWidth: 360,
-    backgroundColor: 'rgba(115, 25, 49, 0.90)',
-    padding: 24,
-    borderRadius: 22,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
   },
-  textTitle: {
-    color: '#d81b60',
-    fontSize: 38,
-    fontFamily: 'GreatVibes',
-    marginBottom: 30,
-    textAlign: 'center',
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
   },
   input: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
     borderColor: '#ddd',
     borderWidth: 1,
-    borderRadius: 14,
-    // paddingHorizontal: 15,
+    borderRadius: 8,
+    paddingHorizontal: 16,
     height: 50,
-    color: '#333',
-    fontSize: 15,
-    // paddingRight: 50,
-    marginBottom: 16,
-    padding: 10
-  },
-  passwordWrapper: {
-    position: 'relative',
+    fontSize: 16,
     marginBottom: 16,
   },
-  eyeIcon: {
-    position: 'absolute',
-    right: 20,
-    top: 13,
-  },
-  button: {
-    backgroundColor: '#f48fb1',
+  registerButton: {
+    backgroundColor: '#fb6090',
     paddingVertical: 14,
-    borderRadius: 25,
-    marginTop: 8,
+    borderRadius: 8,
     alignItems: 'center',
+    marginTop: 20,
   },
   buttonText: {
     color: '#fff',
-    textAlign: 'center',
     fontWeight: 'bold',
     fontSize: 16,
   },
-  loginContainer: {
+  orSignInSection: {
     marginTop: 20,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  orSigninText: {
+    color: '#3d3d3d',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  googleLogo: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
+  },
+  googleButtonText: {
+    color: '#757575',
+    marginLeft: 10,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  alreadyAccountContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
+    marginTop: 20,
   },
-  loginText: {
-    color: '#fcf1f4',
+  alreadyAccountText: {
+    color: '#3d3d3d',
     fontSize: 16,
   },
-  loginLink: {
-    color: '#d81b60',
-    fontSize: 15,
+  signinLink: {
+    color: '#fb6090',
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });

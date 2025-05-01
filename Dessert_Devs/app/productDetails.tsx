@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import ProductDetailsHeader from '../appComponents/ProductDetailsHeader';
-import AddToCartSection from '../appComponents/AddToCartSection';
-import AddToCartModal from '../appComponents/AddToCartModal';
-import { useCart } from '../../context/CartContext'; // ✅ استيراد الكارت كونتكست
+import ProductDetailsHeader from './appComponents/ProductDetailsHeader';
+import AddToCartSection from './appComponents/AddToCartSection';
+import AddToCartModal from './appComponents/AddToCartModal';
+import { useCart } from '../context/CartContext'; // ✅ استيراد الكارت كونتكست
 
 export default function ProductDetailsScreen() {
 const { id, name, description, price, images, tag, rating, calories } = useLocalSearchParams();

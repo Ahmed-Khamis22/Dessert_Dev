@@ -1,8 +1,8 @@
 import React, { useContext, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import CartItem from '../appComponents/CartItem';
-import { CartContext } from '../../context/CartContext';
+import CartItem from './appComponents/CartItem';
+import { CartContext } from './../context/CartContext';
 import { Ionicons } from '@expo/vector-icons';
 
 

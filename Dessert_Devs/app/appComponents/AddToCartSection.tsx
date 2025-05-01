@@ -25,8 +25,9 @@ export default function AddToCartSection({ name, description, price, tag, rating
 
   const cakeSizes = ['6" Cake | Serves 6-8', '7"', '8"', '9"'];
   const maxDescLength = 120;
-  const isLongDesc = description.length > maxDescLength;
-  const displayText = showFullDesc ? description : description.slice(0, maxDescLength);
+  const isLongDesc = (description?.length ?? 0) > maxDescLength;
+  const displayText = showFullDesc ? description : (description?.slice(0, maxDescLength) ?? '');
+
 
   // ✨ هنا اضيف الكود اللي قلنا عليه ✨
   useFocusEffect(

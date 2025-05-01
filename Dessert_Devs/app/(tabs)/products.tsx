@@ -37,7 +37,7 @@ export default function ProductsScreen() {
       price >= priceRange[0] && price <= priceRange[1]
     );
   });
-
+  
   return (
     <ImageBackground
       source={{ uri: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=1600&q=80' }}
@@ -70,7 +70,7 @@ export default function ProductsScreen() {
         />
 
         <View style={styles.backButton}>
-          <Link href="/(tabs)" style={styles.backButtonText}>
+          <Link href="/(tabs)/Home" style={styles.backButtonText}>
             Go Back to Home
           </Link>
         </View>
@@ -97,6 +97,10 @@ export default function ProductsScreen() {
     </ImageBackground>
   );
 }
+ProductsScreen.options = {
+  tabBarStyle: { display: 'none' },
+};
+
 
 const styles = StyleSheet.create({
   container: {

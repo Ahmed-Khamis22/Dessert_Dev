@@ -16,7 +16,7 @@ export default function IndexScreen() {
   return (
     <View style={styles.container}>
       <Image
-        source={require('../../assets/images/teamImage2.jpg')}
+        source={require('../assets/images/teamImage2.jpg')}
         style={styles.logo}
       />
       <Text style={styles.text}>Dessert Devs 🍰</Text>

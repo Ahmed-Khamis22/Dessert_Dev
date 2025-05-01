@@ -26,7 +26,7 @@ export default function ProductCard({ id, name, description, price, tag, rating,
   return (
     <Link
       href={{
-        pathname: '/(tabs)/productDetails',
+        pathname: '/productDetails',
         params: {
           id, // ✨ لازم تبعته!
           name,

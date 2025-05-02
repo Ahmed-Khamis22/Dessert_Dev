@@ -14,7 +14,7 @@ export const productsData = [
     sugarFree: false,
     hasEgg: true,
     type: 'Chocolate Cake',
-    rating: 4,
+    rating: 4.6,
     calories: 250,
   },
   {
@@ -32,7 +32,7 @@ export const productsData = [
     sugarFree: false,
     hasEgg: true,
     type: 'Strawberry Cake',
-    rating: 5,
+    rating: 5.0,
     calories: 200,
   },
   {
@@ -50,7 +50,7 @@ export const productsData = [
     hasEgg: false,
     sugarFree: false,
     type: 'Pastry',
-    rating: 3,
+    rating: 3.5,
     calories: 190,
   },
   {
@@ -67,7 +67,7 @@ export const productsData = [
     sugarFree: true,
     hasEgg: true,
     type: 'Cookie',
-    rating: 4,
+    rating: 4.4,
     calories: 180,
   },
   {
@@ -84,7 +84,7 @@ export const productsData = [
     hasEgg: true,
     sugarFree: false,
     type: 'Middle Eastern',
-    rating: 2,
+    rating: 2.5,
     calories: 160,
   },
   {
@@ -103,7 +103,7 @@ export const productsData = [
     hasEgg: false,
     sugarFree: false,
     type: 'Italian',
-    rating: 5,
+    rating: 4.8,
     calories: 90,
   },
 ];

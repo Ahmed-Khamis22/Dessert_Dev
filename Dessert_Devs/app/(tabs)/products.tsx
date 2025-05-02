@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import FilterModal from '../appComponents/FilterModal';
 import ProductCard from '../appComponents/ProductCard';
 import { productsData } from '../../Data/productsData';
-import { Link } from 'expo-router';
+import { Link , useRouter} from 'expo-router';
 
 export default function ProductsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,6 +25,7 @@ export default function ProductsScreen() {
   const [priceRange, setPriceRange] = useState<[number, number]>([1, 20]);
   const [selectedRating, setSelectedRating] = useState(0);
 
+  const router = useRouter();
   const filteredProducts = productsData.filter(item => {
     const price = parseFloat(item.price.replace('$', ''));
     return (
@@ -49,17 +50,30 @@ export default function ProductsScreen() {
 
         {/* Search Bar + Filter Button */}
         <View style={styles.searchRow}>
-          <TextInput
+          <TouchableOpacity
             style={styles.searchInput}
-            placeholder="Search for a dessert"
-            placeholderTextColor="#999"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          <TouchableOpacity style={styles.filterButton} onPress={() => setFilterVisible(true)}>
+            onPress={() =>
+              router.push({
+                pathname: "/SearchResultsScreen",
+                params: {
+                  data: JSON.stringify(productsData),
+                },
+              })
+            }
+          >
+            <Text style={{ color: "#999", fontSize: 16 }}>
+              {searchQuery === "" ? "Search for a dessert" : searchQuery}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.filterButton}
+            onPress={() => setFilterVisible(true)}
+          >
             <Ionicons name="options" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
+
 
         {/* Products */}
         <FlatList

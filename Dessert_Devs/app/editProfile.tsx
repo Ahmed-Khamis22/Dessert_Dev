@@ -21,7 +21,7 @@ import Toast from 'react-native-toast-message';
 
 export default function EditProfile() {
   const router = useRouter();
-  const emailInputRef = useRef(null);
+  const emailInputRef = useRef<TextInput>(null);
 
   const [name, setName] = useState('Eva Jackson');
   const [email, setEmail] = useState('eva@gmail.com');
@@ -139,10 +139,20 @@ export default function EditProfile() {
             try {
               console.log("Before updateProfile");
           
+              if (!auth.currentUser) {
+                Toast.show({
+                  type: 'error',
+                  text1: 'Not Logged In',
+                  text2: 'Please log in first.',
+                });
+                return;
+              }
+              
               await updateProfile(auth.currentUser, {
                 displayName: name,
-                photoURL: avatar + 'invalid', // ← هنا ضيفي أي حاجة تخليه URL طويل ومش صحيح
+                photoURL: avatar,
               });
+              
           
               console.log("After updateProfile");
           
@@ -156,14 +166,23 @@ export default function EditProfile() {
                 router.back();
               }, 1500);
             } catch (error) {
-              console.log('CATCH ERROR:', error.message); // ← شوفي دي بتطبع ولا لأ
-          
-              Toast.show({
-                type: 'error',
-                text1: 'Update Failed',
-                text2: error.message || 'Something went wrong.',
-              });
+              if (error instanceof Error) {
+                console.log('CATCH ERROR:', error.message);
+                Toast.show({
+                  type: 'error',
+                  text1: 'Update Failed',
+                  text2: error.message,
+                });
+              } else {
+                console.log('Unknown error:', error);
+                Toast.show({
+                  type: 'error',
+                  text1: 'Update Failed',
+                  text2: 'Something went wrong.',
+                });
+              }
             }
+            
           
             setLoading(false);
           }}

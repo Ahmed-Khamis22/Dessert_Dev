@@ -27,14 +27,20 @@ export default function RootLayout() {
   if (!loaded) {
     return null;
   }
-
   return (
     <CartProvider> 
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="+not-found" />
+        <Stack.Screen name="SearchResultsScreen" />
+        <Stack.Screen name="productDetails" />
+      </Stack>
+
         <StatusBar style="auto" />
       </ThemeProvider>
     </CartProvider>

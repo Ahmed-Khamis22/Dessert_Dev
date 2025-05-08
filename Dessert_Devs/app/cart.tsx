@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import CartItem from './appComponents/CartItem';
 import { CartContext } from './../context/CartContext';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 
 
@@ -11,6 +12,8 @@ export default function CartScreen() {
   const navigation = useNavigation();
   const { cartItems, total, discount, applyDiscount } = useContext(CartContext);
   const [promoCode, setPromoCode] = useState('');
+
+  const router = useRouter();
 
   const handleApplyDiscount = () => {
     applyDiscount(promoCode);
@@ -73,7 +76,9 @@ export default function CartScreen() {
           <Text style={styles.totalText}>${(total - discount).toFixed(2)}</Text>
         </View>
         
-        <TouchableOpacity style={styles.checkoutBtn}>
+        <TouchableOpacity style={styles.checkoutBtn}
+        onPress={() => router.push('/PickUpOptionsScreen')}
+        >
           <Text style={styles.checkoutText}>
             Checkout - ${(total - discount).toFixed(2)}
           </Text>

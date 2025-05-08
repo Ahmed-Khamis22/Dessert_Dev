@@ -12,7 +12,7 @@ type Props = {
   tag?: string;
   rating: number;
   calories: number;
-  onAddToCart: () => void;
+onAddToCart: (item: any) => void; // أو حط نوع أفضل لو عندك
   resetSignal?: string;
 };
 
@@ -139,10 +139,28 @@ export default function AddToCartSection({ name, description, price, tag, rating
       </View>
 
       {/* Add To Cart Button */}
-      <TouchableOpacity style={styles.addToCartButton} onPress={onAddToCart}>
+      <TouchableOpacity
+        style={styles.addToCartButton}
+        onPress={() => {
+          const item = {
+            name,
+            description,
+            price: parseFloat(price) + (isGlutenFree ? 10 : 0),
+            rating,
+            calories,
+            quantity,
+            size: selectedSize,
+            type: selectedOption,
+            glutenFree: isGlutenFree,
+          };
+
+          onAddToCart(item);
+        }}
+      >
         <Ionicons name="cart-outline" size={24} color="#fff" style={{ marginRight: 8 }} />
         <Text style={styles.addToCartText}>Add to Cart</Text>
       </TouchableOpacity>
+
 
     </View>
   );

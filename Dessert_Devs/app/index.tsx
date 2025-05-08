@@ -1,25 +1,66 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import {
+  View,
+  StyleSheet,
+  Animated,
+  ImageBackground,
+  Image,
+  Dimensions,
+} from 'react-native';
 import { useRouter } from 'expo-router';
+
+const { width } = Dimensions.get('window');
 
 export default function IndexScreen() {
   const router = useRouter();
 
+  const logoTranslateY = useRef(new Animated.Value(-200)).current;
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(logoTranslateY, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(logoOpacity, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+
     const timer = setTimeout(() => {
-      router.replace('/(tabs)/Home'); // أو Products أو أي صفحة البداية
-    }, 1000);
+      router.replace('/(tabs)/Home');
+    }, 2500);
 
     return () => clearTimeout(timer);
   }, []);
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('../assets/images/teamImage2.jpg')}
-        style={styles.logo}
-      />
-      <Text style={styles.text}>Dessert Devs 🍰</Text>
+      <ImageBackground
+        source={require('../assets/images/splashScreen.jpg')} // الخلفية
+        style={styles.background}
+        resizeMode="cover"
+      >
+
+    <View style={styles.overlay} />
+
+        <Animated.Image
+          source={require('../assets/images/logo3.png')} // اللوجو
+          style={[
+            styles.logo,
+            {
+              transform: [{ translateY: logoTranslateY }],
+              opacity: logoOpacity,
+            },
+          ]}
+        />
+      </ImageBackground>
     </View>
   );
 }
@@ -27,18 +68,23 @@ export default function IndexScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fb6090',
-    alignItems: 'center',
+  },
+  background: {
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
   },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(130, 29, 48, 0.8)', // #821d30 بشفافية 60%
+    zIndex: 1,
+  },  
   logo: {
-    width: 130,
-    height: 130,
-    marginBottom: 20,
+    width: 400,
+    height: 400,
+    resizeMode: 'contain',
+    zIndex: 2,
   },
-  text: {
-    fontSize: 28,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
+  
+  
 });

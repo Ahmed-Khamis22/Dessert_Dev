@@ -1,18 +1,10 @@
 import React, { useContext } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { CartContext } from '../../context/CartContext';
+import { CartContext, Product } from '../../context/CartContext';
 import { Ionicons } from '@expo/vector-icons';
 
 interface CartItemProps {
-  product: {
-    id: string;
-    name: string;
-    price: number;
-    image: string;
-    rating: number;
-    calories: number;
-    quantity: number;
-  };
+  product: Product;
 }
 
 export default function CartItem({ product }: CartItemProps) {
@@ -23,7 +15,6 @@ export default function CartItem({ product }: CartItemProps) {
       <Image source={{ uri: product.image }} style={styles.image} />
       <View style={styles.info}>
         <Text style={styles.name}>{product.name}</Text>
-        
         <Text style={styles.subDetails}>
           ⭐ {product.rating} | 🔥 {product.calories} Calories
         </Text>
@@ -32,30 +23,69 @@ export default function CartItem({ product }: CartItemProps) {
           ${(product.price * product.quantity).toFixed(2)}
         </Text>
 
-        <View style={styles.quantityContainer}>
-          <TouchableOpacity 
-            style={styles.quantityButton} 
-            onPress={() => updateQuantity(product.id, product.quantity - 1)}
+        {product.cakeSize || product.type || product.glutenFree ? (
+          <Text style={styles.customization}>
+            {product.cakeSize} 
+            {product.type ? ` | ${product.type}` : ''} 
+            {product.glutenFree ? ' | Gluten Free' : ''}
+          </Text>
+        ) : null}
+
+        {product.readOnly ? (
+          <Text style={[styles.quantity, { marginTop: 8 }]}>
+            Quantity: {product.quantity}
+          </Text>
+        ) : (
+          <View style={styles.quantityContainer}>
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() =>
+                updateQuantity(
+                  product.id,
+                  product.quantity - 1,
+                  product.cakeSize,
+                  product.type,
+                  product.glutenFree
+                )
+              }
+            >
+              <Text style={styles.quantityText}>-</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.quantity}>{product.quantity}</Text>
+
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() =>
+                updateQuantity(
+                  product.id,
+                  product.quantity + 1,
+                  product.cakeSize,
+                  product.type,
+                  product.glutenFree
+                )
+              }
+            >
+              <Text style={styles.quantityText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {!product.readOnly && (
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={() =>
+              removeItem(
+                product.id,
+                product.cakeSize,
+                product.type,
+                product.glutenFree
+              )
+            }
           >
-            <Text style={styles.quantityText}>-</Text>
+            <Ionicons name="trash-bin" size={24} color="black" />
           </TouchableOpacity>
-
-          <Text style={styles.quantity}>{product.quantity}</Text>
-
-          <TouchableOpacity 
-            style={styles.quantityButton} 
-            onPress={() => updateQuantity(product.id, product.quantity + 1)}
-          >
-            <Text style={styles.quantityText}>+</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity 
-          style={styles.removeButton}
-          onPress={() => removeItem(product.id)}
-        >
-          <Ionicons name="trash-bin" size={24} color="black" />
-        </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -104,6 +134,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000',
+  },
+  customization: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   quantityContainer: {
     flexDirection: 'row',

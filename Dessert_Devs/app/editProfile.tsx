@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef , useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import { updateProfile } from 'firebase/auth';
+import { updateProfile , onAuthStateChanged} from 'firebase/auth';
 import { auth } from '@/firebaseConfig';
 import Toast from 'react-native-toast-message';
 
@@ -56,6 +56,19 @@ export default function EditProfile() {
       setModalVisible(false);
     }
   };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setName(user.displayName || '');
+        setEmail(user.email || '');
+        setAvatar(user.photoURL || 'https://via.placeholder.com/100');
+      }
+    });
+  
+    return () => unsubscribe(); // cleanup
+  }, []);
+  
 
   return (
     <ScrollView style={styles.container}>

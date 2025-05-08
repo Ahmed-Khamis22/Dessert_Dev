@@ -1,6 +1,6 @@
 import React, { createContext, useState, ReactNode, useContext } from 'react';
 
-interface Product {
+export interface Product {
   id: string;
   name: string;
   price: number;
@@ -8,7 +8,12 @@ interface Product {
   rating: number;
   calories: number;
   quantity: number;
+  cakeSize?: string;
+  type?: 'Egg' | 'Eggless';
+  glutenFree?: boolean;
+  readOnly?: boolean; // ✅ أضف دي هنا
 }
+
 
 interface CartContextType {
   cartItems: Product[];
@@ -16,8 +21,19 @@ interface CartContextType {
   discount: number;
   addToCart: (item: Product) => void;
   applyDiscount: (code: string) => void;
-  updateQuantity: (id: string, newQuantity: number) => void;
-  removeItem: (id: string) => void;
+  updateQuantity: (
+    id: string,
+    newQuantity: number,
+    cakeSize?: string,
+    type?: 'Egg' | 'Eggless',
+    glutenFree?: boolean
+  ) => void;
+  removeItem: (
+    id: string,
+    cakeSize?: string,
+    type?: 'Egg' | 'Eggless',
+    glutenFree?: boolean
+  ) => void;
 }
 
 export const CartContext = createContext<CartContextType>({} as CartContextType);
@@ -32,27 +48,64 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const addToCart = (item: Product) => {
     setCartItems(prev => {
-      const existingItem = prev.find(i => i.id === item.id);
+      const existingItem = prev.find(i =>
+        i.id === item.id &&
+        i.cakeSize === item.cakeSize &&
+        i.type === item.type &&
+        i.glutenFree === item.glutenFree
+      );
+
       if (existingItem) {
-        return prev.map(i => 
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+        return prev.map(i =>
+          i.id === item.id &&
+          i.cakeSize === item.cakeSize &&
+          i.type === item.type &&
+          i.glutenFree === item.glutenFree
+            ? { ...i, quantity: i.quantity + 1 }
+            : i
         );
       }
+
       return [...prev, { ...item, quantity: 1 }];
     });
   };
 
-  const updateQuantity = (id: string, newQuantity: number) => {
+  const updateQuantity = (
+    id: string,
+    newQuantity: number,
+    cakeSize?: string,
+    type?: 'Egg' | 'Eggless',
+    glutenFree?: boolean
+  ) => {
     if (newQuantity < 1) return;
-    setCartItems(prev => 
-      prev.map(item => 
-        item.id === id ? { ...item, quantity: newQuantity } : item
+    setCartItems(prev =>
+      prev.map(item =>
+        item.id === id &&
+        item.cakeSize === cakeSize &&
+        item.type === type &&
+        item.glutenFree === glutenFree
+          ? { ...item, quantity: newQuantity }
+          : item
       )
     );
   };
 
-  const removeItem = (id: string) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
+  const removeItem = (
+    id: string,
+    cakeSize?: string,
+    type?: 'Egg' | 'Eggless',
+    glutenFree?: boolean
+  ) => {
+    setCartItems(prev =>
+      prev.filter(item =>
+        !(
+          item.id === id &&
+          item.cakeSize === cakeSize &&
+          item.type === type &&
+          item.glutenFree === glutenFree
+        )
+      )
+    );
   };
 
   const applyDiscount = (code: string) => {
@@ -60,7 +113,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       setDiscount(total * 0.10);
     } else if (code === "DISCOUNT5") {
       setDiscount(total * 0.05);
-    }else{
+    } else {
       setDiscount(0);
     }
   };

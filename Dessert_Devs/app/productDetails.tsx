@@ -24,19 +24,28 @@ const { id, name, description, price, images, tag, rating, calories } = useLocal
   const { addToCart } = useCart(); // ✅ استدعاء addToCart من الكارت كونتكست
 
   // ✅ دالة إضافة المنتج للسلة + فتح المودال
-  const handleAddToCart = () => {
+  const handleAddToCart = (item: {
+    quantity: number;
+    size: string;
+    type: 'Egg' | 'Eggless';
+    glutenFree: boolean;
+  }) => {
     addToCart({
-      id: id as string,  // ✅ ناخد id اللي جاي مع المنتج مش random
+      id: id as string,
       name: name as string,
       price: parseFloat(price as string),
       image: parsedImages[0] || '',
       rating: parseFloat(rating as string),
       calories: parseFloat(calories as string),
-      quantity: 1,
+      quantity: item.quantity,
+      cakeSize: item.size,
+      type: item.type,
+      glutenFree: item.glutenFree,
     });
+  
     setModalVisible(true);
   };
-  
+
 
   return (
     <View key={screenKey} style={styles.screen}>

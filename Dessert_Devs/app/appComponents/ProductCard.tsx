@@ -6,7 +6,7 @@ type ProductProps = {
   id: string;
   name: string;
   description: string;
-  price: string;
+  price: number;
   tag?: string;
   rating: number;
   calories: number;
@@ -18,7 +18,7 @@ const defaultImage = 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/
 export default function ProductCard({ id, name, description, price, tag, rating, calories, images }: ProductProps) {
   const displayDescription = description.length > 70 ? `${description.slice(0, 70)}...` : description;
 
-  const priceNumber = parseFloat(price.replace('$', ''));
+  const priceNumber = price;
   const discountMatch = tag?.match(/(\d+)%\s*OFF/i);
   const discountPercent = discountMatch ? parseFloat(discountMatch[1]) : 0;
   const originalPrice = discountPercent ? (priceNumber / (1 - discountPercent / 100)).toFixed(2) : null;

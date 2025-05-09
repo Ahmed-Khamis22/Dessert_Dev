@@ -11,9 +11,7 @@ export interface Product {
   cakeSize?: string;
   type?: 'Egg' | 'Eggless';
   glutenFree?: boolean;
-  readOnly?: boolean; // ✅ أضف دي هنا
 }
-
 
 interface CartContextType {
   cartItems: Product[];

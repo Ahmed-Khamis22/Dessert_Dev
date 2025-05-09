@@ -1,7 +1,7 @@
 // app/AuthContext.tsx
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from './firebaseConfig';
+import { auth } from './firebase/firebaseConfig';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
 
 interface AuthContextType {

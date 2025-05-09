@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebaseConfig';
+import { auth } from './firebase/firebaseConfig';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 

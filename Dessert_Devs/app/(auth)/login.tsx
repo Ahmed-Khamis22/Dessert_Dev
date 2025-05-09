@@ -9,44 +9,91 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { auth } from '../../firebaseConfig';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { Ionicons } from '@expo/vector-icons';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// import { login } from '../firebase/firebase_auth';
+import { login } from '../../firebase/firebase_auth';
+// import { getUser } from '@/firebase/firestor_fun';
+import { getUser } from '../../firebase/firestor_fun';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleLogin = async () => {
-    setLoading(true);
+  const storeUserData = async (user: any) => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      Alert.alert('Success', 'Logged in successfully');
-      router.replace('/(tabs)/Home');
-    } catch (error: any) {
-      let message = 'An error occurred. Please try again later.';
-      if (error.code === 'auth/user-not-found') message = 'User not found. Please check your email.';
-      else if (error.code === 'auth/wrong-password') message = 'Wrong password. Please try again.';
-      else if (error.code === 'auth/invalid-email') message = 'Invalid email format.';
-      Alert.alert('Error', message);
-    } finally {
-      setLoading(false);
+      const userData = await getUser(user.uid);
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+    } catch (error) {
+      console.error('Error storing user data:', error);
+      throw new Error('Failed to save user data locally');
     }
   };
-
-  const handleGoogleSignIn = async () => {
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    setLoading(true);
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const cred = await login(email, password);
+      
+      if (!cred.user.emailVerified) {
+        Alert.alert(
+          'Email Not Verified',
+          'Please verify your email address before logging in. Check your inbox for the verification link.' );
+        await AsyncStorage.removeItem('user'); // Clear any partial data
+        return;
+      }
+
+      // Store user data in AsyncStorage
+      await storeUserData(cred.user);
+      
+      // Navigate to home screen after successful login
       router.replace('/(tabs)/Home');
-    } catch (error) {
-      console.error('Google Sign-In error:', error);
-      Alert.alert('Error', 'Failed to sign in with Google. Please try again.');
+      
+    } catch (error: any) {
+      let message = 'An error occurred. Please try again later.';
+      console.error('Login error:', error);
+      setError(error.message);
+      // Handle specific Firebase errors
+      switch (error.code) {
+        case 'auth/user-not-found':
+          message = 'User not found. Please check your email or sign up.';
+          break;
+        case 'auth/wrong-password':
+          message = 'Incorrect password. Please try again.';
+          break;
+        case 'auth/invalid-email':
+          message = 'Invalid email format. Please enter a valid email.';
+          break;
+        case 'auth/too-many-requests':
+          message = 'Too many failed attempts. Account temporarily disabled. Try again later or reset your password.';
+          break;
+        case 'auth/network-request-failed':
+          message = 'Network error. Please check your internet connection.';
+          break;
+      }
+      
+      Alert.alert('Login Error', message);
+      console.error('Login error:', error);
+      
+      // Clear sensitive data from storage if login fails
+      try {
+        await AsyncStorage.removeItem('user');
+      } catch (storageError) {
+        console.error('Failed to clear user data:', storageError);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,6 +126,7 @@ export default function LoginScreen() {
           onChangeText={setPassword}
         />
 
+          <Text style={styles.label}>{error}</Text>
         {/* <TouchableOpacity onPress={() => Alert.alert('Forgot Password', 'Coming soon!')}>
           <Text style={styles.forgotPassword}>Forgot your password?</Text>
         </TouchableOpacity> */}
@@ -95,14 +143,13 @@ export default function LoginScreen() {
           <Text style={styles.orSigninText}>OR SIGN IN WITH</Text>
         </View>
 
-        <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
+        {/* <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
           <Image 
             source={require('../../assets/images/teamImage2.jpg')}
             style={styles.googleLogo}
           />
           <Text style={styles.googleButtonText}>Continue with Google</Text>
-        </TouchableOpacity>
-
+        </TouchableOpacity> */}
         <View style={styles.signupContainer}>
           <Text style={styles.signupText}>Don't have an account? </Text>
           <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
@@ -119,7 +166,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
     padding: 24,
-    
   },
   header: {
     flexDirection: 'row',

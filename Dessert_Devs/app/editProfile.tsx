@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { updateProfile , onAuthStateChanged} from 'firebase/auth';
-import { auth } from '@/firebaseConfig';
+import { auth } from '../firebase/firebaseConfig';
 import Toast from 'react-native-toast-message';
 
 export default function EditProfile() {

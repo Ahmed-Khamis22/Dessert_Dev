@@ -2,9 +2,10 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, Pressable, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/firebaseConfig';
+import { auth } from '../../firebase/firebaseConfig';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -13,21 +14,36 @@ export default function ProfileScreen() {
     email: '',
     photo: '',
   });
-  useFocusEffect(
-    useCallback(() => {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
-          setUserData({
-            name: user.displayName || 'No name',
-            email: user.email || '',
-            photo: user.photoURL || 'https://via.placeholder.com/100',
-          });
-        }
-      });
-  
-      return unsubscribe;
-    }, [])
-  );
+
+   const getUserData = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        return JSON.parse(userData);
+      }
+      return null; // Return null if no user data is found
+    } catch (error) {
+      console.error('Error retrieving user data:', error);
+      throw new Error('Failed to retrieve user data');
+    }
+  };
+  const fetchUserData = async () => {
+    try {
+      const user = await getUserData();
+      if (user) {
+        setUserData({
+          name: user.userName || 'User',
+          email: user.email,
+          photo: user.photoURL || 'https://example.com/default-avatar.png', // Default avatar URL
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+  useEffect(() => {
+    fetchUserData();
+  }, []);
 
   return (
     <ScrollView style={styles.container}>

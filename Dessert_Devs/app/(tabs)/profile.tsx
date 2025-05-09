@@ -13,7 +13,7 @@ export default function ProfileScreen() {
     name: '',
     email: '',
     photo: '',
-  });
+  }); 
 
    const getUserData = async () => {
     try {

@@ -122,10 +122,11 @@ export default function HomeScreen() {
   // Filter products based on search and filters
   useEffect(() => {
     let filtered = products.filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase()));
-      
+      const matchesSearch =
+  (item.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+  (item.description || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+  (item.category || "").toLowerCase().includes(searchQuery.toLowerCase());
+
       const matchesFilters = (
         (!selectedOption || 
           (selectedOption === 'withEgg' && item.hasEgg) || 

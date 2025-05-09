@@ -41,20 +41,26 @@ const AddProductScreen: React.FC = () => {
   };
 
   const handleAddProduct = async () => {
-    if (!name || !price || !image) {
+    if (!name.trim() || !price || !image) {
       Alert.alert("Missing Fields", "Please fill in at least name, price, and image");
       return;
     }
 
     const newProduct = {
-      name,
+      name: name.trim(),
       price: parseFloat(price),
-      calories: parseFloat(calories),
-      description,
+      calories: parseFloat(calories) || 0,
+      description: description.trim(),
       hasEggs,
-      image,
-      quantity: parseInt(quantity),
+      images: [image],
+      quantity: parseInt(quantity) || 1,
       discount,
+      rating: "4.5",
+      servings: "",
+      time: "",
+      weight: "",
+      pieces: "",
+      tag: hasEggs ? "withEgg" : "eggless",
       createdAt: new Date(),
     };
 
@@ -286,3 +292,5 @@ const styles = StyleSheet.create({
     color: "#333",
   },
 });
+
+export default AddProductScreen;

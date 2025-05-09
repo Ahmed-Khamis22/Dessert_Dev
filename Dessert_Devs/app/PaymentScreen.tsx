@@ -1,67 +1,106 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ScrollView,
+  Alert,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import CheckoutScreenWrapper from './appComponents/Checkout/CheckoutScreenWrapper';
+import OrderSuccessModal from './appComponents/OrderSuccessModal'; // ✅ مودال النجاح بنفس شكل AddToCart
 
 const paymentMethods = [
-  { id: 'mastercard', name: 'Master Card', logo: require('../assets/images/mastercard.png') },
-  { id: 'cod', name: 'Cash on Delivery', logo: require('../assets/images/cod.png') },
+  {
+    id: 'mastercard',
+    name: 'Master Card',
+    logo: require('../assets/images/mastercard.png'),
+  },
+  {
+    id: 'cod',
+    name: 'Cash on Delivery',
+    logo: require('../assets/images/cod.png'),
+  },
 ];
 
 export default function PaymentScreen() {
   const [selectedMethod, setSelectedMethod] = useState('mastercard');
   const [balance, setBalance] = useState(12550); // رصيد ثابت وهمي
-  const [orderTotal, setOrderTotal] = useState(22.5); // هنا ممكن تجيبه من السياق
+  const [orderTotal, setOrderTotal] = useState(22.5); // إجمالي الطلب
+  const [successVisible, setSuccessVisible] = useState(false);
+
   const router = useRouter();
 
   const handlePlaceOrder = () => {
     if (selectedMethod === 'mastercard') {
       if (orderTotal > balance) {
-        Alert.alert('Insufficient Balance', 'You do not have enough balance to place this order.');
+        Alert.alert(
+          'Insufficient Balance',
+          'You do not have enough balance to place this order.'
+        );
       } else {
-        setBalance(prev => prev - orderTotal);
-        Alert.alert('Payment Successful', `Your card has been charged $${orderTotal.toFixed(2)}.`);
-        router.push('/');
+        setBalance((prev) => prev - orderTotal);
+        setSuccessVisible(true); // ✅ Show modal
       }
     } else {
-      Alert.alert('Order Placed', 'You chose to pay on delivery.');
-      router.push('/');
+      setSuccessVisible(true); // ✅ Show modal for COD
     }
   };
 
   return (
-    <CheckoutScreenWrapper
-      step="payment"
-      buttonLabel="Place Order"
-      onNext={handlePlaceOrder}
-    >
-      <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
-        <Text style={styles.balanceLabel}>Card Balance: ${balance.toFixed(2)}</Text>
+    <>
+      <CheckoutScreenWrapper
+        step="payment"
+        buttonLabel="Place Order"
+        onNext={handlePlaceOrder}
+      >
+        <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
+          <Text style={styles.balanceLabel}>
+            Card Balance: ${balance.toFixed(2)}
+          </Text>
 
-        {paymentMethods.map((method) => (
-          <TouchableOpacity
-            key={method.id}
-            style={[
-              styles.card,
-              selectedMethod === method.id && styles.selectedCard
-            ]}
-            onPress={() => setSelectedMethod(method.id)}
-          >
-            <View style={styles.cardContent}>
-              <Image source={method.logo} style={styles.icon} />
-              <Text style={styles.label}>{method.name}</Text>
-              <View style={styles.radioCircle}>
-                {selectedMethod === method.id && <View style={styles.radioDot} />}
+          {paymentMethods.map((method) => (
+            <TouchableOpacity
+              key={method.id}
+              style={[
+                styles.card,
+                selectedMethod === method.id && styles.selectedCard,
+              ]}
+              onPress={() => setSelectedMethod(method.id)}
+            >
+              <View style={styles.cardContent}>
+                <Image source={method.logo} style={styles.icon} />
+                <Text style={styles.label}>{method.name}</Text>
+                <View style={styles.radioCircle}>
+                  {selectedMethod === method.id && (
+                    <View style={styles.radioDot} />
+                  )}
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          ))}
 
-        {selectedMethod === 'cod' && (
-          <Text style={styles.codNote}>Pay with Cash on Delivery Time</Text>
-        )}
-      </ScrollView>
-    </CheckoutScreenWrapper>
+          {selectedMethod === 'cod' && (
+            <Text style={styles.codNote}>Pay with Cash on Delivery Time</Text>
+          )}
+        </ScrollView>
+      </CheckoutScreenWrapper>
+
+      {/* ✅ مودال النجاح بالشكل الجديد */}
+      <OrderSuccessModal
+        visible={successVisible}
+        onClose={() => {
+          setSuccessVisible(false);
+          router.push('/(tabs)/Home');
+        }}
+        onTrackOrder={() => {
+          setSuccessVisible(false);
+          router.push('/trackOrder');
+        }}
+      />
+    </>
   );
 }
 

@@ -21,9 +21,7 @@ interface Product {
   hasEgg?: boolean;
   sugarLevel?: number;
   type?: string;
-  docId?: string; // ✅ أضف ده هنا
 }
-
 
 export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,7 +55,7 @@ export default function HomeScreen() {
       const querySnapshot = await getDocs(collection(db, 'productData'));
       const productsData: Product[] = [];
       querySnapshot.forEach((doc) => {
-productsData.push({ ...doc.data(), id: doc.id } as Product);
+        productsData.push({ id: doc.id, ...doc.data() } as Product);
       });
       setProducts(productsData);
       setFilteredProducts(productsData);

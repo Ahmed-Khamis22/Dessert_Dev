@@ -1,29 +1,52 @@
-import React, { useState, useMemo } from 'react';
-import { ScrollView, View, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ScrollView, View, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import ProductDetailsHeader from './appComponents/ProductDetailsHeader';
 import AddToCartSection from './appComponents/AddToCartSection';
 import AddToCartModal from './appComponents/AddToCartModal';
-import { useCart } from '../context/CartContext'; // ✅ استيراد الكارت كونتكست
+import { useCart } from '../context/CartContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/firebaseConfig';
 
 export default function ProductDetailsScreen() {
-const { id, name, description, price, images, tag, rating, calories } = useLocalSearchParams();
+  const { id } = useLocalSearchParams();
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const { addToCart } = useCart();
 
-  const parsedImages: string[] = (() => {
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const ref = doc(db, 'productData', id as string);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          setProduct(snap.data());
+        } else {
+          console.warn('Product not found');
+        }
+      } catch (err) {
+        console.error('Error fetching product:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) fetchProduct();
+  }, [id]);
+
+  const parsedImages: string[] = useMemo(() => {
     try {
-      return images ? JSON.parse(images as string) : [];
-    } catch (error) {
+      return product?.images || [];
+    } catch {
       return [];
     }
-  })();
+  }, [product]);
 
-  const screenKey = useMemo(() => `${name}-${Date.now()}`, [name]);
+  // ✅ الحل هنا — استخدم id بدل Date.now()
+  const screenKey = useMemo(() => `${id}`, [id]);
 
-  const { addToCart } = useCart(); // ✅ استدعاء addToCart من الكارت كونتكست
-
-  // ✅ دالة إضافة المنتج للسلة + فتح المودال
   const handleAddToCart = (item: {
     quantity: number;
     size: string;
@@ -32,52 +55,62 @@ const { id, name, description, price, images, tag, rating, calories } = useLocal
   }) => {
     addToCart({
       id: id as string,
-      name: name as string,
-      price: parseFloat(price as string),
+      name: product.name,
+      price: product.price,
       image: parsedImages[0] || '',
-      rating: parseFloat(rating as string),
-      calories: parseFloat(calories as string),
+      rating: product.rating,
+      calories: product.calories,
       quantity: item.quantity,
       cakeSize: item.size,
       type: item.type,
       glutenFree: item.glutenFree,
     });
-  
+
     setModalVisible(true);
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loadingScreen}>
+        <ActivityIndicator size="large" color="#fb6090" />
+      </View>
+    );
+  }
+
+  if (!product) {
+    return (
+      <View style={styles.loadingScreen}>
+        <Text style={{ fontSize: 16 }}>Product not found.</Text>
+      </View>
+    );
+  }
 
   return (
     <View key={screenKey} style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* ✅ هيدر عرض صور المنتج */}
-        <ProductDetailsHeader
-          key={Array.isArray(name) ? name[0] : name}
-          images={parsedImages}
-        />
-        {/* ✅ سكشن الإضافة لعربة التسوق */}
+        <ProductDetailsHeader key={product.name} images={parsedImages} />
+
         <AddToCartSection
-          id={id as string} // ✅ تبعت الـ id
-          name={name as string}
-          description={description as string}
-          price={price as string}
-          images={parsedImages} // ✅ تبعت الـ images اللي عملتلهم parse فوق
-          tag={tag as string}
-          rating={parseFloat(rating as string)} // ✅ حولتهم أرقام صح
-          calories={parseFloat(calories as string)} // ✅ برضه
-          onAddToCart={handleAddToCart} // ✅ خلي دالة الإضافة اللي ظابطة
-          resetSignal={name + '-reset'}
+          id={id as string}
+          name={product.name}
+          description={product.description}
+          price={product.price.toString()}
+          images={parsedImages}
+          tag={product.tag}
+          rating={product.rating}
+          calories={product.calories}
+          onAddToCart={handleAddToCart}
+          resetSignal={product.name + '-reset'}
         />
       </ScrollView>
 
-      {/* ✅ مودال تأكيد إضافة المنتج */}
       <AddToCartModal
         visible={modalVisible}
-        productName={name as string}
+        productName={product.name}
         onClose={() => setModalVisible(false)}
         onGoToCart={() => {
           setModalVisible(false);
-          router.push('/cart'); // تحويل المستخدم على السلة
+          router.push('/cart');
         }}
       />
     </View>
@@ -91,5 +124,10 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingBottom: 30,
+  },
+  loadingScreen: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

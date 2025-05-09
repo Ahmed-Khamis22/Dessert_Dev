@@ -4,8 +4,9 @@ import { CartContext, Product } from '../../context/CartContext';
 import { Ionicons } from '@expo/vector-icons';
 
 interface CartItemProps {
-  product: Product;
+  product: Product & { readOnly?: boolean };
 }
+
 
 export default function CartItem({ product }: CartItemProps) {
   const { updateQuantity, removeItem } = useContext(CartContext);

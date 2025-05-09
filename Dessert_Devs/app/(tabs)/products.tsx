@@ -28,7 +28,9 @@ interface Product {
   sugarFree: boolean;
   sugarLevel: number;
   type: string;
+  readOnly?: boolean; // ✅ أضف ده
 }
+
 
 export default function ProductsScreen() {
   const [products, setProducts] = useState<Product[]>([]);

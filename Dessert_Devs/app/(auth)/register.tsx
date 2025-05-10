@@ -7,7 +7,6 @@ import {
   Alert,
   StyleSheet,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -75,8 +74,6 @@ export default function Register() {
     }
   };
 
-  
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -129,22 +126,6 @@ export default function Register() {
           ) : (
             <Text style={styles.buttonText}>REGISTER</Text>
           )}
-        </TouchableOpacity>
-
-        <View style={styles.orSignInSection}>
-          <Text style={styles.orSigninText}>OR SIGN IN WITH</Text>
-        </View>
-
-        <TouchableOpacity 
-          style={styles.googleButton} 
-          onPress={() => console.log('Google Sign-In')}
-          disabled={loading}
-        >
-          <Image 
-            source={require('../../assets/images/teamImage2.jpg')}
-            style={styles.googleLogo}
-          />
-          <Text style={styles.googleButtonText}>Continue with Google</Text>
         </TouchableOpacity>
 
         <View style={styles.alreadyAccountContainer}>
@@ -213,43 +194,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
-  },
-  orSignInSection: {
-    marginTop: 20,
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  orSigninText: {
-    color: '#3d3d3d',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginTop: 10,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  googleLogo: {
-    width: 24,
-    height: 24,
-    resizeMode: 'contain',
-  },
-  googleButtonText: {
-    color: '#757575',
-    marginLeft: 10,
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   alreadyAccountContainer: {
     flexDirection: 'row',

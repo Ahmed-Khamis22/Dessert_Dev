@@ -12,6 +12,12 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { collection, getDocs } from "firebase/firestore";
+import { useEffect } from "react";
+import { db } from "../firebase/firebaseConfig"; // تأكد من المسار
+import { deleteDoc, doc } from "firebase/firestore"; // فوق
+
+
 
 const AnimatedFlatList = Animated.createAnimatedComponent(
   FlatList<Product>
@@ -29,45 +35,56 @@ type Product = {
   discount?: string;
 };
 
-const mockProducts: Product[] = [
-  {
-    id: "1",
-    name: "Choco Oreo Cake",
-    description: "Chocolate Oreo Mix",
-    price: 98.0,
-    calories: 72,
-    image: "https://via.placeholder.com/100",
-  },
-  {
-    id: "2",
-    name: "Choco Lava Cake",
-    description: "Chocolate Lava Special",
-    price: 78.03,
-    calories: 50,
-    image: "https://via.placeholder.com/100",
-  },
-];
 
 const AdminDashboardScreen: React.FC = () => {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+
+const [products, setProducts] = useState<Product[]>([]);
+
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, "productData"));
+      const fetched: Product[] = [];
+      snapshot.forEach((doc) => {
+        fetched.push({ ...(doc.data() as Product), id: doc.id });
+      });
+      setProducts(fetched);
+    } catch (error) {
+      console.error("❌ Failed to fetch products:", error);
+    }
+  };
+
+  fetchProducts();
+}, []);
+
+
   const scrollY = new Animated.Value(0);
 
-  const handleDelete = (id: string) => {
+
+const handleDelete = async (id: string) => {
+  try {
+    await deleteDoc(doc(db, "productData", id));
     setProducts((prev) => prev.filter((p) => p.id !== id));
-  };
+  } catch (error) {
+    console.error("Delete failed:", error);
+  }
+};
+
 
   const handleEdit = (product: Product) => {
     router.push({
       pathname: "/EditProductScreen",
-      params: { product: JSON.stringify(product) },
+      params: { id: product.id },
     });
+
   };
 
   const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
+    (product?.name?.toLowerCase() || "").includes(search?.toLowerCase() || "")
   );
+
 
   const renderProductItem = ({ item }: { item: Product }) => (
     <Pressable
@@ -100,7 +117,9 @@ const AdminDashboardScreen: React.FC = () => {
         </View>
       </View>
       <View style={styles.actions}>
-        <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+        <Text style={styles.price}>
+          ${typeof item.price === "number" ? item.price.toFixed(2) : "N/A"}
+        </Text>
         <View style={styles.actionIcons}>
           <Pressable
             onPress={() => handleEdit(item)}

@@ -1,237 +1,225 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   TextInput,
-  Image,
-  TouchableOpacity,
   ScrollView,
   StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
   Switch,
+  ActivityIndicator,
 } from "react-native";
-import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { db } from "../firebase/firebaseConfig";
 import * as ImagePicker from "expo-image-picker";
 
-type Product = {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  calories: number;
-  image: string;
-  hasEggs?: boolean;
-  quantity?: number;
-  discount?: string;
-};
+export default function EditProductScreen() {
+  const { id } = useLocalSearchParams();
+  const router = useRouter();
 
-type ParamList = {
-  EditProduct: { product: Product };
-};
+  const [loading, setLoading] = useState(true);
+  const [image, setImage] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [calories, setCalories] = useState("");
+  const [description, setDescription] = useState("");
+  const [hasEggs, setHasEggs] = useState(false);
+  const [quantity, setQuantity] = useState("");
+  const [discount, setDiscount] = useState("");
 
-const EditProductScreen: React.FC = () => {
-  const route = useRoute<RouteProp<ParamList, "EditProduct">>();
-  const navigation = useNavigation();
-  const { product } = route.params;
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const ref = doc(db, "productData", id as string);
+        const snapshot = await getDoc(ref);
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          setName(data.name || "");
+          setPrice(data.price?.toString() || "");
+          setCalories(data.calories?.toString() || "");
+          setDescription(data.description || "");
+          setHasEggs(data.hasEggs || false);
+          setQuantity(data.quantity?.toString() || "");
+          setDiscount(data.discount || "");
+          setImage(data.images?.[0] || null);
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error);
+        Alert.alert("Error", "Could not load product");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const [name, setName] = useState(product.name);
-  const [description, setDescription] = useState(product.description);
-  const [price, setPrice] = useState(String(product.price));
-  const [calories, setCalories] = useState(String(product.calories));
-  const [hasEggs, setHasEggs] = useState(product.hasEggs ?? false);
-  const [quantity, setQuantity] = useState(String(product.quantity ?? ""));
-  const [discount, setDiscount] = useState(product.discount ?? "");
-  const [image, setImage] = useState<string>(product.image);
+    fetchProduct();
+  }, [id]);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 1,
     });
-
     if (!result.canceled) {
       setImage(result.assets[0].uri);
     }
   };
 
-  const handleSave = () => {
-    const updatedProduct = {
-      ...product,
-      name,
-      description,
-      price: parseFloat(price),
-      calories: parseInt(calories),
-      hasEggs,
-      quantity: parseInt(quantity),
-      discount,
-      image,
-    };
-    console.log("Updated Product:", updatedProduct);
-    navigation.goBack();
+  const handleUpdate = async () => {
+    try {
+      await updateDoc(doc(db, "productData", id as string), {
+        name,
+        price: parseFloat(price),
+        calories: parseFloat(calories),
+        description,
+        hasEggs,
+        quantity: parseInt(quantity),
+        discount,
+        images: image ? [image] : [],
+      });
+      Alert.alert("Updated", "Product updated successfully");
+      router.replace("/AdminDashboardScreen");
+    } catch (error) {
+      console.error("Update error:", error);
+      Alert.alert("Error", "Could not update product");
+    }
   };
+
+  const handleDelete = async () => {
+    Alert.alert("Confirm", "Are you sure you want to delete this product?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteDoc(doc(db, "productData", id as string));
+            Alert.alert("Deleted", "Product deleted successfully");
+            router.replace("/AdminDashboardScreen");
+          } catch (error) {
+            console.error("Delete error:", error);
+            Alert.alert("Error", "Could not delete product");
+          }
+        },
+      },
+    ]);
+  };
+
+  if (loading)
+    return (
+      <View style={{ marginTop: 50, alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#d81b60" />
+        <Text style={{ marginTop: 10 }}>Loading product...</Text>
+      </View>
+    );
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color="#d81b60" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Product</Text>
       </View>
 
-      <TouchableOpacity onPress={pickImage}>
-        <Image source={{ uri: image }} style={styles.image} />
-        <Text style={styles.changeImageText}>Tap to change image</Text>
+      <TouchableOpacity style={styles.imageUpload} onPress={pickImage}>
+        {image ? (
+          <Image source={{ uri: image }} style={styles.image} />
+        ) : (
+          <Text style={styles.imageText}>Upload Image</Text>
+        )}
       </TouchableOpacity>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Product Name"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Description"
-        value={description}
-        onChangeText={setDescription}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Price"
-        keyboardType="numeric"
-        value={price}
-        onChangeText={setPrice}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Calories"
-        keyboardType="numeric"
-        value={calories}
-        onChangeText={setCalories}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Quantity"
-        keyboardType="numeric"
-        value={quantity}
-        onChangeText={setQuantity}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Discount (Optional)"
-        value={discount}
-        onChangeText={setDiscount}
-      />
+      <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
+      <TextInput style={styles.input} placeholder="Price" value={price} onChangeText={setPrice} keyboardType="numeric" />
+      <TextInput style={styles.input} placeholder="Calories" value={calories} onChangeText={setCalories} keyboardType="numeric" />
+      <TextInput style={styles.input} placeholder="Quantity" value={quantity} onChangeText={setQuantity} keyboardType="numeric" />
+      <TextInput style={styles.input} placeholder="Discount" value={discount} onChangeText={setDiscount} />
+      <TextInput style={[styles.input, { height: 80 }]} placeholder="Description" value={description} onChangeText={setDescription} multiline />
+
       <View style={styles.switchContainer}>
         <Text style={styles.switchLabel}>Contains Eggs?</Text>
-        <Switch
-          value={hasEggs}
-          onValueChange={setHasEggs}
-          trackColor={{ false: "#ccc", true: "#f06292" }}
-          thumbColor={hasEggs ? "#e91e63" : "#f4f3f4"}
-        />
+        <Switch value={hasEggs} onValueChange={setHasEggs} />
       </View>
 
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>Save Edit</Text>
+      <TouchableOpacity style={styles.button} onPress={handleUpdate}>
+        <Text style={styles.buttonText}>Update Product</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={[styles.button, { backgroundColor: "#f44336", marginTop: 10 }]} onPress={handleDelete}>
+        <Text style={styles.buttonText}>Delete Product</Text>
       </TouchableOpacity>
     </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#ffe6eb",
-    flexGrow: 1,
-    paddingBottom: 30,
+    backgroundColor: "#fff",
+    paddingBottom: 40,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
     paddingTop: 50,
+    paddingHorizontal: 16,
     paddingBottom: 20,
     backgroundColor: "#ec407a",
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    elevation: 5,
   },
   backButton: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   headerTitle: {
+    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
-    color: "#fff",
-    flex: 1,
-    textAlign: "center",
-    marginRight: 44,
+    marginLeft: 16,
   },
-  image: {
-    width: "90%",
-    height: 180,
-    borderRadius: 15,
-    marginTop: 20,
-    alignSelf: "center",
-  },
-  changeImageText: {
-    textAlign: "center",
-    color: "#888",
-    fontSize: 14,
-    marginTop: 6,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
+  imageUpload: {
+    margin: 20,
+    height: 150,
+    backgroundColor: "#ffe4ec",
     borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  image: { width: "100%", height: "100%", borderRadius: 10 },
+  imageText: { color: "#999" },
+  input: {
+    backgroundColor: "#f5f5f5",
     marginHorizontal: 20,
-    marginBottom: 12,
-    backgroundColor: "#f9f9f9",
+    marginBottom: 15,
+    padding: 12,
+    borderRadius: 10,
+    fontSize: 16,
   },
   switchContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
     marginHorizontal: 20,
     marginBottom: 30,
   },
-  switchLabel: {
-    fontSize: 16,
-    color: "#333",
-  },
-  saveButton: {
+  switchLabel: { fontSize: 16, color: "#333" },
+  button: {
     backgroundColor: "#e91e63",
-    paddingVertical: 14,
-    borderRadius: 25,
-    alignItems: "center",
     marginHorizontal: 20,
+    padding: 15,
+    borderRadius: 30,
+    alignItems: "center",
   },
-  saveButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
-  },
+  buttonText: { color: "#fff", fontWeight: "600", fontSize: 18 },
 });
-
-export default EditProductScreen;

@@ -38,8 +38,8 @@ export default function SearchResultsScreen() {
   const scrollY = useState(new Animated.Value(0))[0];
 
   const filtered: Product[] = products.filter((item) =>
-    item.name.toLowerCase().includes(search.toLowerCase())
-  );
+  (item.name?.toLowerCase() || "").includes((search || "").toLowerCase())
+);
 
   const toggleFavorite = (id: string) => {
     if (favorites.includes(id)) {

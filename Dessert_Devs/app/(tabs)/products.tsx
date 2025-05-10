@@ -75,18 +75,19 @@ export default function ProductsScreen() {
     fetchProducts();
   }, []);
 
-  const filteredProducts = products.filter(item => {
-    const price = item.price;
-    return (
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      (!selectedOption || (selectedOption === 'withEgg' && item.hasEgg) || (selectedOption === 'eggless' && !item.hasEgg)) &&
-      (!sugarFreeOnly || item.sugarFree) &&
-      item.sugarLevel <= sugarLevel &&
-      (selectedRating === 0 || item.rating === selectedRating) &&
-      (selectedCakeTypes.length === 0 || selectedCakeTypes.includes(item.type)) &&
-      price >= priceRange[0] && price <= priceRange[1]
-    );
-  });
+const filteredProducts = products.filter(item => {
+  const price = item.price;
+  return (
+    (item.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) &&
+    (!selectedOption || (selectedOption === 'withEgg' && item.hasEgg) || (selectedOption === 'eggless' && !item.hasEgg)) &&
+    (!sugarFreeOnly || item.sugarFree) &&
+    (item.sugarLevel ?? 0) <= sugarLevel &&
+    (selectedRating === 0 || (item.rating ?? 0) >= selectedRating) &&
+    (selectedCakeTypes.length === 0 || selectedCakeTypes.includes(item.type)) &&
+    price >= priceRange[0] && price <= priceRange[1]
+  );
+});
+
 
   return (
     <ImageBackground

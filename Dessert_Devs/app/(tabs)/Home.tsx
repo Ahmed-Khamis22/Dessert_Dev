@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, FlatList, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, FlatList, Image, ActivityIndicator, Dimensions } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import FilterModal from '../appComponents/FilterModal';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
-import { Dimensions } from 'react-native';
+import { WebView } from 'react-native-webview';
 
 interface Product {
   id: string;
@@ -21,9 +21,49 @@ interface Product {
   hasEgg?: boolean;
   sugarLevel?: number;
   type?: string;
-  docId?: string; // ✅ أضف ده هنا
 }
 
+const chatHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      background-color: transparent;
+    }
+    #chatling-container {
+      position: relative;
+      height: 100%;
+      width: 100%;
+      padding: 10px 0;
+      box-sizing: border-box;
+    }
+  </style>
+  <script>
+    window.chtlConfig = { 
+      chatbotId: "9389989979",
+      position: "bottom-right",
+      marginVertical: 100,
+      marginHorizontal: 100
+    };
+    (function() {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://chatling.ai/js/embed.js';
+      s.id = 'chtl-script';
+      s.setAttribute('data-id', '9389989979');
+      s.async = true;
+      d.head.appendChild(s);
+    })();
+  </script>
+</head>
+<body>
+  <div id="chatling-container"></div>
+</body>
+</html>`;
 
 export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,20 +84,20 @@ export default function HomeScreen() {
   const [selectedRating, setSelectedRating] = useState(0);
   const [categories, setCategories] = useState<string[]>([]);
   const [currentDealIndex, setCurrentDealIndex] = useState(0);
+  const [chatVisible, setChatVisible] = useState(false);
   const [dealImages] = useState([
-  require('../../Data/images/The deal of the day image.png'),
-  require('../../Data/images/choco truffle cake.jpg'), // Add your other images here
-  require('../../Data/images/red_velvet_sandwich_cake.jpg'),
-  require('../../Data/images/8201-strawberry-shortcake.jpg'),
-]);
+    require('../../Data/images/The deal of the day image.png'),
+    require('../../Data/images/choco truffle cake.jpg'),
+    require('../../Data/images/red_velvet_sandwich_cake.jpg'),
+    require('../../Data/images/8201-strawberry-shortcake.jpg'),
+  ]);
 
-  // Fetch products from Firestore
   const fetchProducts = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'productData'));
       const productsData: Product[] = [];
       querySnapshot.forEach((doc) => {
-productsData.push({ ...doc.data(), id: doc.id } as Product);
+      productsData.push({ ...doc.data(), id: doc.id } as Product);
       });
       setProducts(productsData);
       setFilteredProducts(productsData);
@@ -122,212 +162,214 @@ productsData.push({ ...doc.data(), id: doc.id } as Product);
   }
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <MaterialIcons name="menu" size={24} color="#666" />
-          <View style={styles.notificationIcon}>
-            <Ionicons name="cart-outline" size={24} color="#666" />
-            <View style={styles.notificationBadge} />
+    <View style={{ flex: 1 }}>
+      <ScrollView style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <MaterialIcons name="menu" size={24} color="#666" />
+            <View style={styles.notificationIcon}>
+              <Ionicons name="cart-outline" size={24} color="#666" />
+              <View style={styles.notificationBadge} />
+            </View>
+          </View>
+          <Text style={styles.greeting}>Hi Ever!</Text>
+          <View style={styles.addressContainer}>
+            <Ionicons name="location-outline" size={16} color="#666" />
+            <Text style={styles.address}>3920 Cameron Road, Dunkirk</Text>
           </View>
         </View>
-        <Text style={styles.greeting}>Hi Ever!</Text>
-        <View style={styles.addressContainer}>
-          <Ionicons name="location-outline" size={16} color="#666" />
-          <Text style={styles.address}>3920 Cameron Road, Dunkirk</Text>
-        </View>
-      </View>
 
-      {/* Search Bar */}
-      <View style={styles.searchRow}>
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#fb6090" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search Cake"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor="#fb6090"
-            returnKeyType="search"
-          />
-          {searchQuery !== '' && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color="#999" />
-            </TouchableOpacity>
-          )}
-        </View>
-        
-        <TouchableOpacity
-          style={styles.filterButton}
-          onPress={() => setFilterVisible(true)}
-        >
-          <Ionicons name="options" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
-      
-      {searchQuery.trim() !== '' ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Search Results</Text>
-          <FlatList
-            data={filteredProducts}
-            scrollEnabled={false}
-            numColumns={2}
-            columnWrapperStyle={styles.columnWrapper}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity 
-                style={styles.productCard}
-                onPress={() => router.push(`/productDetails?id=${item.id}`)}
-              >
-                <View style={styles.ratingBadge}>
-                  <Ionicons name="star" size={12} color="#FFD700" />
-                  <Text style={styles.ratingText}>{item.rating?.toFixed(1) || '4.5'}</Text>
-                </View>
-                
-                <Image 
-                  source={{ uri: item.images[0] }} 
-                  style={styles.productImage}
-                  resizeMode="cover"
-                />
-                
-                <Text style={styles.productName}>{item.name}</Text>
-                <Text style={styles.productDescription}>{item.description}</Text>
-                
-                {item.calories && (
-                  <View style={styles.caloriesContainer}>
-                    <Ionicons name="flame" size={12} color="#FF5722" />
-                    <Text style={styles.caloriesText}>{item.calories} Calories</Text>
-                  </View>
-                )}
-                
-                <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
+        {/* Search Bar */}
+        <View style={styles.searchRow}>
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={20} color="#fb6090" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search Cake"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor="#fb6090"
+              returnKeyType="search"
+            />
+            {searchQuery !== '' && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color="#999" />
               </TouchableOpacity>
             )}
-            ListEmptyComponent={
-              <View style={styles.noResults}>
-                <Text style={styles.noResultsText}>No products found matching "{searchQuery}"</Text>
-              </View>
-            }
-          />
-        </View>
-      ) : (
-        <>
-        {/* Deal of the Day Section */}
-<View style={styles.section}>
-  <View style={styles.dealHeader}>
-    <Text style={styles.sectionTitle}>DEAL OF THE DAY</Text>
-    <TouchableOpacity>
-      <Text style={styles.viewAll}>View all &gt;</Text>
-    </TouchableOpacity>
-  </View>
-
-  <View style={styles.dealScrollContainer}>
-    <ScrollView
-      horizontal
-      pagingEnabled
-      showsHorizontalScrollIndicator={false}
-      onScroll={(event) => {
-        const contentOffset = event.nativeEvent.contentOffset.x;
-        const index = Math.round(contentOffset / (Dimensions.get('window').width - 32));
-        setCurrentDealIndex(index);
-      }}
-      scrollEventThrottle={16}
-    >
-      {dealImages.map((deal) => (
-        <View key={deal.id} style={styles.dealImageContainer}>
-          <Image source={deal.image} style={styles.dealImage} />
-          <View style={styles.dealBadge}>
-            <Text style={styles.dealBadgeText}>DEAL</Text>
           </View>
-          <Text style={styles.dealTitle}>{deal.title}</Text>
-          <Text style={styles.dealPrice}>{deal.price}</Text>
+          
+          <TouchableOpacity
+            style={styles.filterButton}
+            onPress={() => setFilterVisible(true)}
+          >
+            <Ionicons name="options" size={24} color="#fff" />
+          </TouchableOpacity>
         </View>
-      ))}
-    </ScrollView>
-  </View>
-
-  {/* Pagination Dots */}
-  <View style={styles.pagination}>
-    {dealImages.map((_, index) => (
-      <View 
-        key={index} 
-        style={[
-          styles.dot,
-          index === currentDealIndex ? styles.activeDot : {}
-        ]} 
-      />
-    ))}
-  </View>
-</View>
-
-          {/* Categories */}
+        
+        {searchQuery.trim() !== '' ? (
           <View style={styles.section}>
-            <View style={styles.sectionTitleContainer}>
-              <Text style={styles.sectionTitle}> Categories</Text>
-            </View>
+            <Text style={styles.sectionTitle}>Search Results</Text>
             <FlatList
-              horizontal
-              data={categories}
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item}
+              data={filteredProducts}
+              scrollEnabled={false}
+              numColumns={2}
+              columnWrapperStyle={styles.columnWrapper}
+              keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.categoryItem,
-                    {
-                      marginRight: item === categories[categories.length - 1] ? 0 : 10,
-                      backgroundColor: hoveredCategory === item ? '#fb6090' : 'transparent',
-                      borderWidth: 1,
-                      borderColor: '#fb6090',
-                    },
-                  ]}
-                  onPress={() => {
-                    setSelectedCategory(item === selectedCategory ? null : item);
-                    setSearchQuery(item === selectedCategory ? '' : item);
-                  }}
-                  {...(Platform.OS === 'web'
-                    ? {
-                        onMouseEnter: () => setHoveredCategory(item),
-                        onMouseLeave: () => setHoveredCategory(null),
-                      }
-                    : {
-                        onPressIn: () => setHoveredCategory(item),
-                        onPressOut: () => setHoveredCategory(null),
-                      })}
+                <TouchableOpacity 
+                  style={styles.productCard}
+                  onPress={() => router.push(`/productDetails/${item.id}`)}
                 >
-                  <FontAwesome
-                    name={
-                      item === 'Birthday'
-                        ? 'gift'
-                        : item === 'Anniversary'
-                        ? 'heart'
-                        : item === 'Wedding'
-                        ? 'diamond'
-                        : item === 'Specialty'
-                        ? 'star'
-                        : item === 'Celebration'
-                        ? 'birthday-cake'
-                        : 'sun-o'
-                    }
-                    size={20}
-                    color={hoveredCategory === item ? '#fff' : '#fb6090'}
+                  <View style={styles.ratingBadge}>
+                    <Ionicons name="star" size={12} color="#FFD700" />
+                    <Text style={styles.ratingText}>{item.rating?.toFixed(1) || '4.5'}</Text>
+                  </View>
+                  
+                  <Image 
+                    source={{ uri: item.images[0] }} 
+                    style={styles.productImage}
+                    resizeMode="cover"
                   />
-                  <Text
-                    style={[
-                      styles.categoryText,
-                      { color: hoveredCategory === item ? '#fff' : '#fb6090' },
-                    ]}
-                  >
-                    {item}
-                  </Text>
+                  
+                  <Text style={styles.productName}>{item.name}</Text>
+                  <Text style={styles.productDescription}>{item.description}</Text>
+                  
+                  {item.calories && (
+                    <View style={styles.caloriesContainer}>
+                      <Ionicons name="flame" size={12} color="#FF5722" />
+                      <Text style={styles.caloriesText}>{item.calories} Calories</Text>
+                    </View>
+                  )}
+                  
+                  <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
                 </TouchableOpacity>
               )}
-              contentContainerStyle={[styles.categoriesContainer, { paddingRight: 15 }]}
+              ListEmptyComponent={
+                <View style={styles.noResults}>
+                  <Text style={styles.noResultsText}>No products found matching "{searchQuery}"</Text>
+                </View>
+              }
             />
           </View>
+        ) : (
+          <>
+            {/* Deal of the Day Section */}
+            <View style={styles.section}>
+              <View style={styles.dealHeader}>
+                <Text style={styles.sectionTitle}>DEAL OF THE DAY</Text>
+                <TouchableOpacity>
+                  <Text style={styles.viewAll}>View all &gt;</Text>
+                </TouchableOpacity>
+              </View>
 
-          {/* Popular Products */}
+              <View style={styles.dealScrollContainer}>
+                <ScrollView
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  onScroll={(event) => {
+                    const contentOffset = event.nativeEvent.contentOffset.x;
+                    const index = Math.round(contentOffset / (Dimensions.get('window').width - 32));
+                    setCurrentDealIndex(index);
+                  }}
+                  scrollEventThrottle={16}
+                >
+                  {dealImages.map((deal, index) => (
+                    <View key={index} style={styles.dealImageContainer}>
+                      <Image source={deal} style={styles.dealImage} />
+                      <View style={styles.dealBadge}>
+                        <Text style={styles.dealBadgeText}>DEAL</Text>
+                      </View>
+                      <Text style={styles.dealTitle}>Special Cake Offer</Text>
+                      <Text style={styles.dealPrice}>$19.99</Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {/* Pagination Dots */}
+              <View style={styles.pagination}>
+                {dealImages.map((_, index) => (
+                  <View 
+                    key={index} 
+                    style={[
+                      styles.dot,
+                      index === currentDealIndex ? styles.activeDot : {}
+                    ]} 
+                  />
+                ))}
+              </View>
+            </View>
+
+            {/* Categories */}
+            <View style={styles.section}>
+              <View style={styles.sectionTitleContainer}>
+                <Text style={styles.sectionTitle}>Categories</Text>
+              </View>
+              <FlatList
+                horizontal
+                data={categories}
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => item}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.categoryItem,
+                      {
+                        marginRight: item === categories[categories.length - 1] ? 0 : 10,
+                        backgroundColor: hoveredCategory === item ? '#fb6090' : 'transparent',
+                        borderWidth: 1,
+                        borderColor: '#fb6090',
+                      },
+                    ]}
+                    onPress={() => {
+                      setSelectedCategory(item === selectedCategory ? null : item);
+                      setSearchQuery(item === selectedCategory ? '' : item);
+                    }}
+                    {...(Platform.OS === 'web'
+                      ? {
+                          onMouseEnter: () => setHoveredCategory(item),
+                          onMouseLeave: () => setHoveredCategory(null),
+                        }
+                      : {
+                          onPressIn: () => setHoveredCategory(item),
+                          onPressOut: () => setHoveredCategory(null),
+                        })}
+                  >
+                    <FontAwesome
+                      name={
+                        item === 'Birthday'
+                          ? 'gift'
+                          : item === 'Anniversary'
+                          ? 'heart'
+                          : item === 'Wedding'
+                          ? 'diamond'
+                          : item === 'Specialty'
+                          ? 'star'
+                          : item === 'Celebration'
+                          ? 'birthday-cake'
+                          : 'sun-o'
+                      }
+                      size={20}
+                      color={hoveredCategory === item ? '#fff' : '#fb6090'}
+                    />
+                    <Text
+                      style={[
+                        styles.categoryText,
+                        { color: hoveredCategory === item ? '#fff' : '#fb6090' },
+                      ]}
+                    >
+                      {item}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                contentContainerStyle={[styles.categoriesContainer, { paddingRight: 15 }]}
+              />
+            </View>
+
+           
+           {/* Popular Products */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>
@@ -391,52 +433,80 @@ productsData.push({ ...doc.data(), id: doc.id } as Product);
             />
           </View>
 
-          {/* Special Offers */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>
-               Order History
-              </Text>
-              <TouchableOpacity>
-                <Text style={styles.viewAll}>View all &gt;</Text>
-              </TouchableOpacity>
-            </View>
+            {/* Special Offers */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Order History</Text>
+                <TouchableOpacity>
+                  <Text style={styles.viewAll}>View all &gt;</Text>
+                </TouchableOpacity>
+              </View>
 
-            <View style={styles.offerCard}>
-              <View style={styles.offerHeader}>
-                <FontAwesome name="tag" size={16} color="#fb6090" />
-                <Text style={styles.offerTitle}>Special Discount</Text>
+              <View style={styles.offerCard}>
+                <View style={styles.offerHeader}>
+                  <FontAwesome name="tag" size={16} color="#fb6090" />
+                  <Text style={styles.offerTitle}>Special Discount</Text>
+                </View>
+                <Text style={styles.offerDescription}>Get 20% off on your first order</Text>
+                <View style={styles.offerCodeContainer}>
+                  <Text style={styles.offerCode}>Use code: WELCOME20</Text>
+                  <MaterialIcons name="content-copy" size={16} color="#666" />
+                </View>
+                <Text style={styles.offerValid}>
+                  <Ionicons name="calendar-outline" size={12} color="#666" /> Valid until: 31/12/2023
+                </Text>
               </View>
-              <Text style={styles.offerDescription}>Get 20% off on your first order</Text>
-              <View style={styles.offerCodeContainer}>
-                <Text style={styles.offerCode}>Use code: WELCOME20</Text>
-                <MaterialIcons name="content-copy" size={16} color="#666" />
-              </View>
-              <Text style={styles.offerValid}>
-                <Ionicons name="calendar-outline" size={12} color="#666" /> Valid until: 31/12/2023
-              </Text>
             </View>
+          </>
+        )}
+        <FilterModal
+          visible={filterVisible}
+          onClose={() => setFilterVisible(false)}
+          onApply={() => setFilterVisible(false)}
+          sugarFreeOnly={sugarFreeOnly}
+          setSugarFreeOnly={setSugarFreeOnly}
+          sugarLevel={sugarLevel}
+          setSugarLevel={setSugarLevel}
+          priceRange={priceRange}
+          setPriceRange={setPriceRange}
+          selectedOption={selectedOption}
+          setSelectedOption={setSelectedOption}
+          selectedRating={selectedRating}
+          setSelectedRating={setSelectedRating}
+          selectedCakeTypes={selectedCakeTypes}
+          setSelectedCakeTypes={setSelectedCakeTypes}
+        />
+      </ScrollView>
+      
+      {/* Chat Bot Button */}
+      <TouchableOpacity 
+        style={styles.chatButton}
+        onPress={() => setChatVisible(true)}
+      >
+        <Ionicons name="chatbubble-ellipses" size={24} color="#fff" />
+      </TouchableOpacity>
+
+      {/* Chat Modal */}
+      {chatVisible && (
+        <View style={styles.chatModal}>
+          <View style={styles.chatHeader}>
+            <Text style={styles.chatTitle}>Customer Support</Text>
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setChatVisible(false)}
+            >
+              <Ionicons name="close" size={24} color="#fff" />
+            </TouchableOpacity>
           </View>
-        </>
+          <WebView
+            source={{ html: chatHtml, baseUrl: 'https://chatling.ai' }}
+            style={styles.chatWebview}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+          />
+        </View>
       )}
-      <FilterModal
-        visible={filterVisible}
-        onClose={() => setFilterVisible(false)}
-        onApply={() => setFilterVisible(false)}
-        sugarFreeOnly={sugarFreeOnly}
-        setSugarFreeOnly={setSugarFreeOnly}
-        sugarLevel={sugarLevel}
-        setSugarLevel={setSugarLevel}
-        priceRange={priceRange}
-        setPriceRange={setPriceRange}
-        selectedOption={selectedOption}
-        setSelectedOption={setSelectedOption}
-        selectedRating={selectedRating}
-        setSelectedRating={setSelectedRating}
-        selectedCakeTypes={selectedCakeTypes}
-        setSelectedCakeTypes={setSelectedCakeTypes}
-      />
-    </ScrollView>
+    </View>
   );
 }
 
@@ -568,7 +638,6 @@ const styles = StyleSheet.create({
   columnWrapper: {
     justifyContent: 'space-between',
   },
-  // New Product Card Styles
   productCard: {
     width: 160,
     backgroundColor: '#fff',
@@ -712,95 +781,135 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
   },
-  bannerImage: {
-    width: '100%',
-    height: 150,
-    borderRadius: 10,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
   },
-  dealScroll: {
-  marginHorizontal: -16,
-},
-dealSection: {
-  marginBottom: 25,
-},
-dealHeader: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: 15,
-  paddingHorizontal: 16,
-},
-dealScrollContainer: {
-  height: 200, // ارتفاع ثابت للصور
-},
-dealImageContainer: {
-  width: Dimensions.get('window').width - 40, // عرض الصورة مع هوامش
-  marginHorizontal: 8,
-  borderRadius: 12,
-  overflow: 'hidden',
-  position: 'relative',
-},
-dealImage: {
-  width: '100%',
-  height: '100%',
-  resizeMode: 'cover',
-},
-dealBadge: {
-  position: 'absolute',
-  top: 10,
-  left: 10,
-  backgroundColor: '#fb6090',
-  paddingVertical: 4,
-  paddingHorizontal: 8,
-  borderRadius: 4,
-},
-dealBadgeText: {
-  color: 'white',
-  fontWeight: 'bold',
-  fontSize: 12,
-},
-dealTitle: {
-  position: 'absolute',
-  bottom: 40,
-  left: 16,
-  color: 'white',
-  fontSize: 18,
-  fontWeight: 'bold',
-  textShadowColor: 'rgba(0,0,0,0.5)',
-  textShadowOffset: { width: 1, height: 1 },
-  textShadowRadius: 3,
-},
-dealPrice: {
-  position: 'absolute',
-  bottom: 20,
-  left: 16,
-  color: 'white',
-  fontSize: 16,
-  fontWeight: 'bold',
-  textShadowColor: 'rgba(0,0,0,0.5)',
-  textShadowOffset: { width: 1, height: 1 },
-  textShadowRadius: 3,
-},
-pagination: {
-  flexDirection: 'row',
-  justifyContent: 'center',
-  alignItems: 'center',
-  marginTop: 10,
-},
-dot: {
-  width: 8,
-  height: 8,
-  borderRadius: 4,
-  backgroundColor: '#ccc',
-  marginHorizontal: 4,
-},
-activeDot: {
-  backgroundColor: '#fb6090',
-},
+  dealHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  dealScrollContainer: {
+    height: 200,
+  },
+  dealImageContainer: {
+    width: Dimensions.get('window').width - 40,
+    marginHorizontal: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  dealImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  dealBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    backgroundColor: '#fb6090',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+  },
+  dealBadgeText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  dealTitle: {
+    position: 'absolute',
+    bottom: 40,
+    left: 16,
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  dealPrice: {
+    position: 'absolute',
+    bottom: 20,
+    left: 16,
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  pagination: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ccc',
+    marginHorizontal: 4,
+  },
+  activeDot: {
+    backgroundColor: '#fb6090',
+  },
+  chatButton: {
+    position: 'absolute',
+    bottom: 60,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#fb6090',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  chatModal: {
+    position: 'absolute',
+    top: 40,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'white',
+    zIndex: 1001,
+  },
+  chatHeader: {
+    height: 60,
+    backgroundColor: '#fb6090',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+  },
+  chatTitle: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chatWebview: {
+    flex: 1,
+    marginTop: 1,
+    marginBottom: 100,
+    backgroundColor: 'transparent',
+  },
 });

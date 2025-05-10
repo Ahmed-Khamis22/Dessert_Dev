@@ -78,7 +78,7 @@ export default function OrderSuccessModal({ visible, onClose, onTrackOrder }: Pr
           </TouchableOpacity>
 
           <TouchableOpacity onPress={onClose} style={styles.continueWrapper}>
-            <Text style={styles.continueShopping}>Continue Shopping</Text>
+            <Text style={styles.continueShopping}>Home</Text>
             <Text style={styles.arrow}>›</Text>
           </TouchableOpacity>
 

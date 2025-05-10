@@ -9,7 +9,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 
 export default function ProductDetailsScreen() {
-  const { id } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const { id } = params;
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
   const [product, setProduct] = useState<any>(null);
@@ -17,23 +18,44 @@ export default function ProductDetailsScreen() {
   const { addToCart } = useCart();
 
   useEffect(() => {
-    const fetchProduct = async () => {
+    // لو جاي من صفحة البحث
+    if (params.name && params.images) {
       try {
-        const ref = doc(db, 'productData', id as string);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          setProduct(snap.data());
-        } else {
-          console.warn('Product not found');
-        }
+        const parsedImages = JSON.parse(decodeURIComponent(params.images as string));
+        setProduct({
+          name: params.name,
+          description: params.description,
+          price: Number(params.price),
+          images: parsedImages,
+          tag: params.tag,
+          rating: Number(params.rating),
+          calories: params.calories,
+        });
       } catch (err) {
-        console.error('Error fetching product:', err);
+        console.error('Error parsing params:', err);
       } finally {
         setLoading(false);
       }
-    };
+    } else {
+      // لو جاي من id فقط وجيبنا البيانات من Firebase
+      const fetchProduct = async () => {
+        try {
+          const ref = doc(db, 'productData', id as string);
+          const snap = await getDoc(ref);
+          if (snap.exists()) {
+            setProduct(snap.data());
+          } else {
+            console.warn('Product not found');
+          }
+        } catch (err) {
+          console.error('Error fetching product:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    if (id) fetchProduct();
+      if (id) fetchProduct();
+    }
   }, [id]);
 
   const parsedImages: string[] = useMemo(() => {
@@ -44,7 +66,6 @@ export default function ProductDetailsScreen() {
     }
   }, [product]);
 
-  // ✅ الحل هنا — استخدم id بدل Date.now()
   const screenKey = useMemo(() => `${id}`, [id]);
 
   const handleAddToCart = (item: {

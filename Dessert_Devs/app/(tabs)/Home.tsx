@@ -7,7 +7,8 @@ import FilterModal from '../appComponents/FilterModal';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
 import { WebView } from 'react-native-webview';
-
+import { Dimensions } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 interface Product {
   id: string;
   name: string;
@@ -91,6 +92,53 @@ export default function HomeScreen() {
     require('../../Data/images/red_velvet_sandwich_cake.jpg'),
     require('../../Data/images/8201-strawberry-shortcake.jpg'),
   ]);
+  const addNotification = async (type: string, title: string, message: string) => {
+  try {
+    const storedNotifications = await AsyncStorage.getItem('notifications');
+    const notifications = storedNotifications ? JSON.parse(storedNotifications) : [];
+    
+    const newNotification = {
+      id: Date.now().toString(),
+      type,
+      title,
+      message,
+      timestamp: new Date().toISOString(),
+      read: false
+    };
+    
+    const updatedNotifications = [newNotification, ...notifications];
+    await AsyncStorage.setItem('notifications', JSON.stringify(updatedNotifications));
+  } catch (error) {
+    console.error('Error saving notification:', error);
+  }
+};
+const  unreadCount  =0;
+
+// مثال للاستخدام عند إضافة منتج للسلة
+const handleAddToCart = (product: Product) => {
+  addNotification('cart', 'Item added to cart', `You added ${product.name} to your cart`);
+  // ... باقي كود إضافة للسلة
+};
+  const [userData, setUserData] = useState({
+    name: 'User',
+    email: '',
+    photo: 'https://example.com/default-avatar.png'
+  });
+  const fetchUserData = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        const parsedData = JSON.parse(userData);
+        setUserData({
+          name: parsedData.userName || 'User',
+          email: parsedData.email || '',
+          photo: parsedData.photoURL || 'https://example.com/default-avatar.png'
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -167,46 +215,78 @@ export default function HomeScreen() {
       <ScrollView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <MaterialIcons name="menu" size={24} color="#666" />
-            <View style={styles.notificationIcon}>
-              <Ionicons name="cart-outline" size={24} color="#666" />
-              <View style={styles.notificationBadge} />
-            </View>
-          </View>
-          <Text style={styles.greeting}>Hi Ever!</Text>
-          <View style={styles.addressContainer}>
-            <Ionicons name="location-outline" size={16} color="#666" />
-            <Text style={styles.address}>3920 Cameron Road, Dunkirk</Text>
-          </View>
+  <View style={styles.headerTop}>
+  <Image 
+    source={{ uri: userData.photo }} 
+    style={styles.userAvatar}
+  />
+  <View style={styles.headerIconsContainer}>
+    <TouchableOpacity 
+      style={styles.cartIcon}
+      onPress={() => router.push('/cart')}
+    >
+      <Ionicons name="cart-outline" size={24} color="#666" />
+      {cartItemsCount > 0 && (
+        <View style={styles.cartBadge}>
+          <Text style={styles.cartBadgeText}>{cartItemsCount}</Text>
         </View>
+      )}
+    </TouchableOpacity>
+    
+<TouchableOpacity 
+  style={styles.notificationIcon}
+  onPress={() => router.push('/notifications')}
+>
+  <Ionicons name="notifications-outline" size={24} color="#666" />
+  {unreadCount > 0 && (
+    <View style={styles.notificationBadge}>
+      <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+    </View>
+  )}
+</TouchableOpacity>
+  </View>
+</View>
+<Text style={styles.greeting}>Hi {userData.name.split(' ')[0]}!</Text>
+        <View style={styles.addressContainer}>
+          <Ionicons name="mail-outline" size={16} color="#666" />
+          <Text style={styles.emailText}>{userData.email}</Text>
+        </View>
+      </View>
+
 
         {/* Search Bar */}
-        <View style={styles.searchRow}>
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color="#fb6090" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search Cake"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor="#fb6090"
-              returnKeyType="search"
-            />
-            {searchQuery !== '' && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={20} color="#999" />
-              </TouchableOpacity>
-            )}
-          </View>
-          
+         <View style={styles.searchRow}>
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#fb6090" style={styles.searchIcon} />
           <TouchableOpacity
-            style={styles.filterButton}
-            onPress={() => setFilterVisible(true)}
+            style={styles.searchInput}
+            onPress={() =>
+              router.push({
+                pathname: "/SearchResultsScreen",
+                params: {
+                  data: JSON.stringify(products),
+                },
+              })
+            }
           >
-            <Ionicons name="options" size={24} color="#fff" />
+            <Text style={{ color: "#fb6090", fontSize: 16, flex: 1 }}>
+              {searchQuery === "" ? "Search for a dessert" : searchQuery}
+            </Text>
           </TouchableOpacity>
+          {searchQuery !== '' && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color="#999" />
+            </TouchableOpacity>
+          )}
         </View>
+        
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={() => setFilterVisible(true)}
+        >
+          <Ionicons name="options" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
         
         {searchQuery.trim() !== '' ? (
           <View style={styles.section}>
@@ -260,7 +340,6 @@ export default function HomeScreen() {
               <View style={styles.dealHeader}>
                 <Text style={styles.sectionTitle}>DEAL OF THE DAY</Text>
                 <TouchableOpacity>
-                  <Text style={styles.viewAll}>View all &gt;</Text>
                 </TouchableOpacity>
               </View>
 
@@ -276,15 +355,19 @@ export default function HomeScreen() {
                   }}
                   scrollEventThrottle={16}
                 >
-                  {dealImages.map((deal, index) => (
-                    <View key={index} style={styles.dealImageContainer}>
-                      <Image source={deal} style={styles.dealImage} />
-                      <View style={styles.dealBadge}>
-                        <Text style={styles.dealBadgeText}>DEAL</Text>
-                      </View>
-                      <Text style={styles.dealTitle}>Special Cake Offer</Text>
-                      <Text style={styles.dealPrice}>$19.99</Text>
-                    </View>
+                  {dealImages.map((deal) => (
+        <View key={deal.id} style={styles.dealImageContainer}>
+          <Image 
+            source={deal.image} 
+            style={styles.dealImage}
+            resizeMode="cover"
+          />
+          <View style={styles.dealBadge}>
+            <Text style={styles.dealBadgeText}>DEAL</Text>
+          </View>
+          <Text style={styles.dealTitle}>{deal.title}</Text>
+          <Text style={styles.dealPrice}>{deal.price}</Text>
+        </View>
                   ))}
                 </ScrollView>
               </View>
@@ -435,29 +518,7 @@ export default function HomeScreen() {
           </View>
 
             {/* Special Offers */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Order History</Text>
-                <TouchableOpacity>
-                  <Text style={styles.viewAll}>View all &gt;</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.offerCard}>
-                <View style={styles.offerHeader}>
-                  <FontAwesome name="tag" size={16} color="#fb6090" />
-                  <Text style={styles.offerTitle}>Special Discount</Text>
-                </View>
-                <Text style={styles.offerDescription}>Get 20% off on your first order</Text>
-                <View style={styles.offerCodeContainer}>
-                  <Text style={styles.offerCode}>Use code: WELCOME20</Text>
-                  <MaterialIcons name="content-copy" size={16} color="#666" />
-                </View>
-                <Text style={styles.offerValid}>
-                  <Ionicons name="calendar-outline" size={12} color="#666" /> Valid until: 31/12/2023
-                </Text>
-              </View>
-            </View>
+          
           </>
         )}
         <FilterModal

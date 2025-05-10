@@ -5,6 +5,7 @@ import AuthGuard from '../../authGuard';
 
 export default function TabLayout() {
   return (
+    
     <AuthGuard>
       <Tabs
         screenOptions={({ route }) => ({
@@ -12,6 +13,14 @@ export default function TabLayout() {
           tabBarInactiveTintColor: '#fcdde7',
           tabBarShowLabel: false,
           headerShown: false,
+          tabBarStyle: {
+            backgroundColor: '#fb6090',
+            height: 55,
+            position: 'absolute',
+            borderTopWidth: 0,
+            paddingBottom: 8,
+            paddingTop: 8,
+          },
           tabBarIcon: ({ color, focused }) => {
             let iconName: any = 'home';
 
@@ -31,7 +40,6 @@ export default function TabLayout() {
               case 'profile':
                 iconName = focused ? 'person' : 'person-outline';
                 break;
-                
             }
 
             return (
@@ -52,49 +60,12 @@ export default function TabLayout() {
           },
         })}
       >
-        <Tabs.Screen
-          name="Home"
-          options={{
-            tabBarStyle: {
-              backgroundColor: '#fb6090',
-              height: 55,
-              position: 'absolute',
-              borderTopWidth: 0,
-              paddingBottom: 8,
-              paddingTop: 8,
-            },
-          }}
-        />
-        <Tabs.Screen
-          name="favorite"
-          options={{
-            tabBarStyle: { display: 'none' },
-          }}
-        />
-        <Tabs.Screen
-          name="menu"
-          options={{
-            tabBarStyle: { display: 'none' },
-          }}
-        />
-        <Tabs.Screen
-          name="notifications"
-          options={{
-            tabBarStyle: { display: 'none' },
-          }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            tabBarStyle: { display: 'none' },
-          }}
-        />
-        <Tabs.Screen
-          name="products"
-          options={{
-            tabBarStyle: { display: 'none' },
-          }}
-        />
+        <Tabs.Screen name="Home" />
+        <Tabs.Screen name="favorite" />
+        <Tabs.Screen name="menu" />
+        <Tabs.Screen name="notifications" />
+        <Tabs.Screen name="profile" />
+        <Tabs.Screen name="dealOfTheDay" />
       </Tabs>
     </AuthGuard>
   );
